@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ProCare Pharmacy — storefront</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/app.css" />
+  </head>
+  <body>
+    <header class="app-header hidden" id="app-header">
+      <div class="brand">
+        <div class="logo-dot" aria-hidden="true"></div>
+        <span>ProCare Pharmacy</span>
+      </div>
+      <nav class="nav-tabs" id="nav-tabs"></nav>
+    </header>
+
+    <main>
+      <!-- Auth landing -->
+      <section id="auth-panel" class="panels split">
+        <div class="hero">
+          <h1>Healthcare essentials, thoughtfully stocked.</h1>
+          <p>
+            Patients browse and purchase OTC lines. Pharmacists publish inventory. Administrators keep the
+            community safe by moderating catalogues and memberships.
+          </p>
+          <div class="btn-row">
+            <button type="button" id="toggle-auth" class="btn btn-ghost">
+              Switch to register
+            </button>
+          </div>
+          <footer class="legal" style="margin: 0; padding-left: 0">
+            Demonstration storefront — never substitute this app for licensed medical guidance.
+          </footer>
+        </div>
+
+        <div class="panels">
+          <div class="card" id="login-form-section">
+            <h2>Sign in</h2>
+            <form id="login-form" class="form-grid">
+              <label
+                >Email
+                <input type="email" name="email" required autocomplete="username" />
+              </label>
+              <label
+                >Password
+                <input type="password" name="password" required autocomplete="current-password" />
+              </label>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary">Continue</button>
+              </div>
+              <p class="small">
+                First launch with an empty database auto-creates
+                <code>admin@medstore.local</code> / <code>Admin123!</code> (change via DB for production).
+              </p>
+            </form>
+          </div>
+
+          <div class="card hidden" id="register-form-section">
+            <h2>Create profile</h2>
+            <form id="register-form" class="form-grid">
+              <label
+                >Full name
+                <input type="text" name="fullName" required />
+              </label>
+              <label
+                >Email
+                <input type="email" name="email" required autocomplete="email" />
+              </label>
+              <label
+                >Password
+                <input type="password" name="password" required minlength="6" autocomplete="new-password" />
+              </label>
+              <label
+                >Account type
+                <select name="role" required>
+                  <option value="CUSTOMER">Patient / customer</option>
+                  <option value="PHARMACIST">Pharmacist</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
+              </label>
+              <label id="admin-key-row" class="hidden"
+                >Admin registration key
+                <input type="password" name="adminKey" autocomplete="off" />
+              </label>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary">Register</button>
+              </div>
+              <p class="small">
+                Admin signup requires a secret key set in <code>db.properties</code> (<code>security.admin_registration_key</code>).
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Signed-in workspace -->
+      <div id="app-shell" class="hidden">
+        <div class="hero">
+          <h1 id="greet-h1">Your health hub</h1>
+          <p id="greet-p">
+            Tabs above adjust to your role — shop responsibly and keep parcels out of children's reach.
+          </p>
+        </div>
+
+        <div id="views">
+          <!-- Store -->
+          <section data-pane="shop">
+            <div class="card" style="margin-bottom: 1rem">
+              <p class="small" style="margin: 0">
+                Showing live medicines from MySQL · prices are illustrative coursework values.
+              </p>
+            </div>
+            <div class="grid-store" id="medicine-grid"></div>
+          </section>
+
+          <!-- Cart -->
+          <section data-pane="cart" class="hidden">
+            <div class="card">
+              <h2>Bag</h2>
+              <div id="cart-body"></div>
+              <p style="margin-top: 1rem">
+                <strong id="cart-total">Total €0.00</strong>
+              </p>
+              <div class="btn-row">
+                <button type="button" id="checkout-btn" class="btn btn-primary">
+                  Checkout & clear bag
+                </button>
+              </div>
+              <p class="small">
+                Checkout deducts warehouse stock atomically inside a DB transaction on the Java tier.
+              </p>
+            </div>
+          </section>
+
+          <!-- Pharmacist -->
+          <section data-pane="pharm" class="hidden">
+            <div class="card">
+              <h2>Add medicine</h2>
+              <form id="pharm-form" class="form-grid">
+                <label
+                  >Name
+                  <input type="text" name="name" required />
+                </label>
+                <label
+                  >Description
+                  <textarea name="description" rows="3"></textarea>
+                </label>
+                <label
+                  >Price (€)
+                  <input type="number" name="price" step="0.01" required />
+                </label>
+                <label
+                  >Stock units
+                  <input type="number" name="stock" min="0" value="0" />
+                </label>
+                <div class="btn-row">
+                  <button type="submit" class="btn btn-primary">Add to catalogue</button>
+                </div>
+              </form>
+            </div>
+            <div class="card" style="margin-top: 1rem">
+              <h2>Catalogue</h2>
+              <p class="small">
+                Edit or remove items you maintain — admins have the same tools under the Medicines tab.
+              </p>
+              <div style="overflow-x: auto">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Price</th>
+                      <th>Stock</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pharm-meds-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Admin users -->
+          <section data-pane="adm-users" class="hidden">
+            <div class="card">
+              <h2>Accounts</h2>
+              <div style="overflow-x: auto">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Email</th>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Admin medicines -->
+          <section data-pane="adm-meds" class="hidden">
+            <div class="card">
+              <h2>Add medicine</h2>
+              <form id="admin-catalog-form" class="form-grid">
+                <label
+                  >Name
+                  <input type="text" name="name" required />
+                </label>
+                <label
+                  >Description
+                  <textarea name="description" rows="3"></textarea>
+                </label>
+                <label
+                  >Price (€)
+                  <input type="number" name="price" step="0.01" required />
+                </label>
+                <label
+                  >Stock units
+                  <input type="number" name="stock" min="0" value="0" />
+                </label>
+                <div class="btn-row">
+                  <button type="submit" class="btn btn-primary">Publish</button>
+                </div>
+              </form>
+            </div>
+            <div class="card" style="margin-top: 1rem">
+              <h2>Catalogue moderation</h2>
+              <div style="overflow-x: auto">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Price</th>
+                      <th>Stock</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-meds-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- Profile -->
+          <section data-pane="account" class="hidden">
+            <div class="card">
+              <h2>Personal details</h2>
+              <form id="account-form" class="form-grid">
+                <label
+                  >Email
+                  <input type="email" name="email" required />
+                </label>
+                <label
+                  >Full name
+                  <input type="text" name="fullName" required />
+                </label>
+                <div class="btn-row">
+                  <button type="submit" class="btn btn-primary">Save changes</button>
+                  <button type="button" id="logout-btn" class="btn btn-ghost">
+                    Sign out
+                  </button>
+                </div>
+                <hr style="border: none; border-top: 1px solid var(--border); margin: 0.85rem 0" />
+                <p class="small">Deleting irreversibly drops your cart associations.</p>
+                <button type="button" id="delete-account-btn" class="btn btn-danger">
+                  Delete my account
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+
+        <footer class="legal">
+          Object-oriented layering: encapsulated entities, polymorphic purchasers via
+          <code>PurchaseProcessor</code>, RBAC modeled with an abstract <code>User</code> inheritance tree.
+        </footer>
+      </div>
+    </main>
+
+    <div id="med-edit-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card card" role="dialog" aria-labelledby="med-edit-title">
+        <h2 id="med-edit-title">Edit medicine</h2>
+        <form id="med-edit-form" class="form-grid">
+          <input type="hidden" name="medicineId" id="med-edit-id" />
+          <label
+            >Name
+            <input type="text" name="name" required />
+          </label>
+          <label
+            >Description
+            <textarea name="description" rows="3"></textarea>
+          </label>
+          <label
+            >Price (€)
+            <input type="number" name="price" step="0.01" required />
+          </label>
+          <label
+            >Stock units
+            <input type="number" name="stock" min="0" />
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="med-edit-cancel" class="btn btn-ghost">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="js/app.js" defer></script>
+  </body>
+</html>
