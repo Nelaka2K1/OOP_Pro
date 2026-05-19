@@ -22,22 +22,18 @@
     </header>
 
     <main>
-      <!-- Auth landing -->
       <section id="auth-panel" class="panels split">
         <div class="hero">
           <h1>Healthcare essentials, thoughtfully stocked.</h1>
           <p>
-            Patients browse and purchase OTC lines. Pharmacists publish inventory. Administrators keep the
-            community safe by moderating catalogues and memberships.
+            Patients browse and purchase. Pharmacists publish inventory with photos. Accountants manage receipts.
+            Administrators moderate memberships.
           </p>
           <div class="btn-row">
             <button type="button" id="toggle-auth" class="btn btn-ghost">
               Switch to register
             </button>
           </div>
-          <footer class="legal" style="margin: 0; padding-left: 0">
-            Demonstration storefront — never substitute this app for licensed medical guidance.
-          </footer>
         </div>
 
         <div class="panels">
@@ -55,10 +51,6 @@
               <div class="btn-row">
                 <button type="submit" class="btn btn-primary">Continue</button>
               </div>
-              <p class="small">
-                First launch with an empty database auto-creates
-                <code>admin@medstore.local</code> / <code>Admin123!</code> (change via DB for production).
-              </p>
             </form>
           </div>
 
@@ -82,6 +74,7 @@
                 <select name="role" required>
                   <option value="CUSTOMER">Patient / customer</option>
                   <option value="PHARMACIST">Pharmacist</option>
+                  <option value="ACCOUNTANT">Accountant</option>
                   <option value="ADMIN">Administrator</option>
                 </select>
               </label>
@@ -92,35 +85,39 @@
               <div class="btn-row">
                 <button type="submit" class="btn btn-primary">Register</button>
               </div>
-              <p class="small">
-                Admin signup requires a secret key set in <code>db.properties</code> (<code>security.admin_registration_key</code>).
-              </p>
             </form>
           </div>
         </div>
       </section>
 
-      <!-- Signed-in workspace -->
       <div id="app-shell" class="hidden">
         <div class="hero">
           <h1 id="greet-h1">Your health hub</h1>
-          <p id="greet-p">
-            Tabs above adjust to your role — shop responsibly and keep parcels out of children's reach.
-          </p>
+          <p id="greet-p">Welcome back.</p>
         </div>
 
         <div id="views">
-          <!-- Store -->
           <section data-pane="shop">
-            <div class="card" style="margin-bottom: 1rem">
-              <p class="small" style="margin: 0">
-                Showing live medicines from MySQL · prices are illustrative coursework values.
-              </p>
+            <div id="prescription-panel" class="card hidden" style="margin-bottom: 1rem">
+              <h2>Your prescription</h2>
+              <p class="small">Upload an image or PDF of your prescription (optional).</p>
+              <div id="prescription-current" class="small"></div>
+              <div class="btn-row" style="margin-top: 0.75rem; flex-wrap: wrap; align-items: flex-end">
+                <label style="flex: 1; min-width: 200px"
+                  >File
+                  <input type="file" id="prescription-file" accept="image/*,application/pdf" />
+                </label>
+                <button type="button" id="prescription-upload-btn" class="btn btn-primary">
+                  Upload
+                </button>
+                <button type="button" id="prescription-remove-btn" class="btn btn-ghost hidden">
+                  Remove
+                </button>
+              </div>
             </div>
             <div class="grid-store" id="medicine-grid"></div>
           </section>
 
-          <!-- Cart -->
           <section data-pane="cart" class="hidden">
             <div class="card">
               <h2>Bag</h2>
@@ -130,16 +127,41 @@
               </p>
               <div class="btn-row">
                 <button type="button" id="checkout-btn" class="btn btn-primary">
-                  Checkout & clear bag
+                  Proceed to payment
                 </button>
               </div>
-              <p class="small">
-                Checkout deducts warehouse stock atomically inside a DB transaction on the Java tier.
-              </p>
             </div>
           </section>
 
-          <!-- Pharmacist -->
+          <section data-pane="receipts" class="hidden">
+            <div class="card">
+              <h2>My receipts</h2>
+              <div id="patient-receipts-list"></div>
+            </div>
+          </section>
+
+          <section data-pane="acct-receipts" class="hidden">
+            <div class="card">
+              <h2>Receipt ledger</h2>
+              <p class="small">Update or remove issued receipts.</p>
+              <div style="overflow-x: auto">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Receipt</th>
+                      <th>Customer</th>
+                      <th>Total</th>
+                      <th>Paid</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="accountant-receipts-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
           <section data-pane="pharm" class="hidden">
             <div class="card">
               <h2>Add medicine</h2>
@@ -160,6 +182,10 @@
                   >Stock units
                   <input type="number" name="stock" min="0" value="0" />
                 </label>
+                <label
+                  >Product photo (optional)
+                  <input type="file" name="image" accept="image/*" />
+                </label>
                 <div class="btn-row">
                   <button type="submit" class="btn btn-primary">Add to catalogue</button>
                 </div>
@@ -167,14 +193,12 @@
             </div>
             <div class="card" style="margin-top: 1rem">
               <h2>Catalogue</h2>
-              <p class="small">
-                Edit or remove items you maintain — admins have the same tools under the Medicines tab.
-              </p>
               <div style="overflow-x: auto">
                 <table class="data">
                   <thead>
                     <tr>
                       <th>#</th>
+                      <th>Photo</th>
                       <th>Name</th>
                       <th>Price</th>
                       <th>Stock</th>
@@ -187,7 +211,6 @@
             </div>
           </section>
 
-          <!-- Admin users -->
           <section data-pane="adm-users" class="hidden">
             <div class="card">
               <h2>Accounts</h2>
@@ -199,7 +222,7 @@
                       <th>Email</th>
                       <th>Name</th>
                       <th>Role</th>
-                      <th></th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody id="admin-users-body"></tbody>
@@ -208,56 +231,17 @@
             </div>
           </section>
 
-          <!-- Admin medicines -->
-          <section data-pane="adm-meds" class="hidden">
-            <div class="card">
-              <h2>Add medicine</h2>
-              <form id="admin-catalog-form" class="form-grid">
-                <label
-                  >Name
-                  <input type="text" name="name" required />
-                </label>
-                <label
-                  >Description
-                  <textarea name="description" rows="3"></textarea>
-                </label>
-                <label
-                  >Price (€)
-                  <input type="number" name="price" step="0.01" required />
-                </label>
-                <label
-                  >Stock units
-                  <input type="number" name="stock" min="0" value="0" />
-                </label>
-                <div class="btn-row">
-                  <button type="submit" class="btn btn-primary">Publish</button>
-                </div>
-              </form>
-            </div>
-            <div class="card" style="margin-top: 1rem">
-              <h2>Catalogue moderation</h2>
-              <div style="overflow-x: auto">
-                <table class="data">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Price</th>
-                      <th>Stock</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-meds-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          <!-- Profile -->
           <section data-pane="account" class="hidden">
             <div class="card">
               <h2>Personal details</h2>
+              <div id="profile-avatar-wrap" class="profile-avatar-wrap hidden">
+                <img id="profile-avatar" class="profile-avatar" alt="Profile" />
+              </div>
               <form id="account-form" class="form-grid">
+                <label id="profile-photo-row" class="hidden"
+                  >Profile photo
+                  <input type="file" id="profile-photo-input" accept="image/*" />
+                </label>
                 <label
                   >Email
                   <input type="email" name="email" required />
@@ -272,8 +256,6 @@
                     Sign out
                   </button>
                 </div>
-                <hr style="border: none; border-top: 1px solid var(--border); margin: 0.85rem 0" />
-                <p class="small">Deleting irreversibly drops your cart associations.</p>
                 <button type="button" id="delete-account-btn" class="btn btn-danger">
                   Delete my account
                 </button>
@@ -281,13 +263,112 @@
             </div>
           </section>
         </div>
-
-        <footer class="legal">
-          Object-oriented layering: encapsulated entities, polymorphic purchasers via
-          <code>PurchaseProcessor</code>, RBAC modeled with an abstract <code>User</code> inheritance tree.
-        </footer>
       </div>
     </main>
+
+    <div id="payment-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card card" role="dialog" aria-labelledby="payment-title">
+        <h2 id="payment-title">Payment</h2>
+        <p class="small" id="payment-total-label">Total €0.00</p>
+        <form id="payment-form" class="form-grid">
+          <label
+            >Name on card
+            <input type="text" name="cardholderName" required autocomplete="cc-name" />
+          </label>
+          <label
+            >Card number
+            <input type="text" name="cardNumber" inputmode="numeric" placeholder="4242 4242 4242 4242" required />
+          </label>
+          <label
+            >Expiry (MM/YY)
+            <input type="text" name="expiry" placeholder="12/28" required />
+          </label>
+          <label
+            >CVV
+            <input type="text" name="cvv" inputmode="numeric" maxlength="4" required />
+          </label>
+          <label
+            >Payment method label
+            <select name="paymentMethod">
+              <option value="Card">Card</option>
+              <option value="Debit">Debit</option>
+              <option value="Digital wallet">Digital wallet</option>
+            </select>
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Pay now</button>
+            <button type="button" id="payment-cancel" class="btn btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="receipt-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card card receipt-card" role="dialog" aria-labelledby="receipt-view-title">
+        <h2 id="receipt-view-title">Receipt</h2>
+        <div id="receipt-view-body"></div>
+        <div class="btn-row" style="margin-top: 1rem">
+          <button type="button" id="receipt-close" class="btn btn-primary">Close</button>
+          <button type="button" id="receipt-print" class="btn btn-ghost">Print</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="user-edit-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card card" role="dialog" aria-labelledby="user-edit-title">
+        <h2 id="user-edit-title">Edit user</h2>
+        <form id="user-edit-form" class="form-grid">
+          <input type="hidden" name="userId" id="user-edit-id" />
+          <label>Email <input type="email" name="email" required /></label>
+          <label>Full name <input type="text" name="fullName" required /></label>
+          <label>Role
+            <select name="role" required>
+              <option value="CUSTOMER">Patient / customer</option>
+              <option value="PHARMACIST">Pharmacist</option>
+              <option value="ACCOUNTANT">Accountant</option>
+              <option value="ADMIN">Administrator</option>
+            </select>
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="user-edit-cancel" class="btn btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="receipt-edit-overlay" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card card" role="dialog" aria-labelledby="receipt-edit-title">
+        <h2 id="receipt-edit-title">Edit receipt</h2>
+        <form id="receipt-edit-form" class="form-grid">
+          <input type="hidden" name="receiptId" id="receipt-edit-id" />
+          <label
+            >Customer name
+            <input type="text" name="customerName" required />
+          </label>
+          <label
+            >Customer email
+            <input type="email" name="customerEmail" required />
+          </label>
+          <label
+            >Total (€)
+            <input type="number" name="totalAmount" step="0.01" required />
+          </label>
+          <label
+            >Payment method
+            <input type="text" name="paymentMethod" required />
+          </label>
+          <label
+            >Notes
+            <textarea name="notes" rows="3"></textarea>
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="receipt-edit-cancel" class="btn btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div id="med-edit-overlay" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card card" role="dialog" aria-labelledby="med-edit-title">
@@ -310,6 +391,11 @@
             >Stock units
             <input type="number" name="stock" min="0" />
           </label>
+          <label
+            >Product photo
+            <input type="file" id="med-edit-image" accept="image/*" />
+          </label>
+          <div id="med-edit-preview" class="med-preview hidden"></div>
           <div class="btn-row">
             <button type="submit" class="btn btn-primary">Save</button>
             <button type="button" id="med-edit-cancel" class="btn btn-ghost">
@@ -323,3 +409,5 @@
     <script src="js/app.js" defer></script>
   </body>
 </html>
+
+

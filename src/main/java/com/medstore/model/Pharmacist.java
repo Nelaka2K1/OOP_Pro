@@ -2,8 +2,8 @@ package com.medstore.model;
 
 public final class Pharmacist extends User {
 
-    public Pharmacist(Integer id, String email, String passwordHash, String fullName) {
-        super(id, email, passwordHash, fullName);
+    public Pharmacist(Integer id, String email, String passwordHash, String fullName, String profileImagePath) {
+        super(id, email, passwordHash, fullName, profileImagePath);
     }
 
     @Override

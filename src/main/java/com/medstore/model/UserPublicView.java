@@ -6,12 +6,14 @@ public final class UserPublicView {
     private final String email;
     private final String fullName;
     private final String role;
+    private final String profileImagePath;
 
-    public UserPublicView(Integer id, String email, String fullName, String role) {
+    public UserPublicView(Integer id, String email, String fullName, String role, String profileImagePath) {
         this.id = id;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
+        this.profileImagePath = profileImagePath;
     }
 
     public Integer getId() {
@@ -28,5 +30,9 @@ public final class UserPublicView {
 
     public String getRole() {
         return role;
+    }
+
+    public String getProfileImagePath() {
+        return profileImagePath;
     }
 }

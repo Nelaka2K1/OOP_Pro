@@ -52,7 +52,7 @@ public class MedicinesServlet extends HttpServlet {
             return;
         }
         if (!opt.get().canManageCatalog()) {
-            JsonResponses.error(resp, 403, "pharmacist or admin role required to add catalogue items");
+            JsonResponses.error(resp, 403, "pharmacist role required to add catalogue items");
             return;
         }
         AddMedicineBody body = JsonResponses.gson().fromJson(req.getReader(), AddMedicineBody.class);
@@ -86,7 +86,7 @@ public class MedicinesServlet extends HttpServlet {
             return;
         }
         if (!opt.get().canManageCatalog()) {
-            JsonResponses.error(resp, 403, "pharmacist or admin role required to edit catalogue items");
+            JsonResponses.error(resp, 403, "pharmacist role required to edit catalogue items");
             return;
         }
         String idStr = req.getParameter("id");
@@ -136,7 +136,7 @@ public class MedicinesServlet extends HttpServlet {
         }
         var opt = users.findById(uid);
         if (opt.isEmpty() || !opt.get().canDeleteMedicines()) {
-            JsonResponses.error(resp, 403, "pharmacist or admin role required to delete medicines");
+            JsonResponses.error(resp, 403, "pharmacist role required to delete medicines");
             return;
         }
         String idStr = req.getParameter("id");
@@ -168,6 +168,10 @@ public class MedicinesServlet extends HttpServlet {
         map.put("id", m.getId());
         map.put("name", m.getName());
         map.put("description", m.getDescription());
+        map.put("imagePath", m.getImagePath());
+        if (m.getImagePath() != null && !m.getImagePath().isBlank()) {
+            map.put("imageUrl", UploadServlet.publicUrl(m.getImagePath()));
+        }
         map.put("price", m.getPrice());
         map.put("stock", m.getStock());
         map.put("createdByUserId", m.getCreatedByUserId());

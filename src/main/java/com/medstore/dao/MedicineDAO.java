@@ -15,10 +15,17 @@ import java.util.Optional;
 public final class MedicineDAO {
 
     private static Medicine mapRow(ResultSet rs) throws SQLException {
+        String imagePath = null;
+        try {
+            imagePath = rs.getString("image_path");
+        } catch (SQLException ignored) {
+            // column missing until migration runs
+        }
         return new Medicine(
                 rs.getInt("id"),
                 rs.getString("name"),
                 rs.getString("description"),
+                imagePath,
                 rs.getBigDecimal("price"),
                 rs.getInt("stock"),
                 rs.getObject("created_by_user_id") != null ? rs.getInt("created_by_user_id") : null,
@@ -70,6 +77,18 @@ public final class MedicineDAO {
             ps.setInt(4, stock);
             ps.setInt(5, id);
             return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateImagePath(int id, String imagePath) {
+        String sql = "UPDATE medicines SET image_path = ? WHERE id = ?";
+        try (Connection c = Db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, imagePath);
+            ps.setInt(2, id);
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

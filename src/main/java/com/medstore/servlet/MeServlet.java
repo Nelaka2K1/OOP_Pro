@@ -2,6 +2,7 @@ package com.medstore.servlet;
 
 import com.medstore.dao.UserDAO;
 import com.medstore.servlet.util.Auth;
+import com.medstore.servlet.util.UserJson;
 import com.medstore.util.JsonResponses;
 
 import jakarta.servlet.ServletException;
@@ -33,6 +34,6 @@ public class MeServlet extends HttpServlet {
         var user = opt.get();
         JsonResponses.writeJson(resp, 200, Map.of(
                 "authenticated", true,
-                "user", user.toPublicView()));
+                "user", UserJson.toMap(user)));
     }
 }

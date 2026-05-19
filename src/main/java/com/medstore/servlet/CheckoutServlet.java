@@ -39,14 +39,30 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        PurchaseProcessor.CheckoutResult r = checkout.checkout(uid);
+        CheckoutBody body = null;
+        try {
+            body = JsonResponses.gson().fromJson(req.getReader(), CheckoutBody.class);
+        } catch (Exception ignored) {
+            // optional body
+        }
+        String paymentMethod = body != null && body.paymentMethod != null ? body.paymentMethod : "Card";
+        var u = user.get();
+
+        PurchaseProcessor.CheckoutResult r = checkout.checkout(
+                uid, u.getFullName(), u.getEmail(), paymentMethod);
         if (!r.isSuccess()) {
             JsonResponses.error(resp, 400, r.getMessage());
             return;
         }
         JsonResponses.writeJson(resp, 200, Map.of(
                 "orderId", r.getOrderId(),
+                "receiptId", r.getReceiptId(),
                 "total", r.getTotal(),
                 "message", r.getMessage()));
+    }
+
+    private static final class CheckoutBody {
+        String paymentMethod;
+        String cardholderName;
     }
 }

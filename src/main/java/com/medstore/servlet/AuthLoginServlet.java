@@ -4,6 +4,7 @@ import com.medstore.dao.UserDAO;
 import com.medstore.model.User;
 import com.medstore.util.JsonResponses;
 import com.medstore.util.PasswordHasher;
+import com.medstore.servlet.util.UserJson;
 import com.medstore.util.SessionKeys;
 
 import jakarta.servlet.ServletException;
@@ -29,7 +30,15 @@ public class AuthLoginServlet extends HttpServlet {
             JsonResponses.error(resp, 400, "email and password required");
             return;
         }
-        User user = users.findByEmail(body.email.strip()).orElse(null);
+        User user;
+        try {
+            user = users.findByEmail(body.email.strip()).orElse(null);
+        } catch (RuntimeException e) {
+            getServletContext().log("Login lookup failed", e);
+            JsonResponses.error(resp, 503,
+                    "Database schema may be outdated — restart the app server, or run sql/migration_v2.sql");
+            return;
+        }
         if (user == null || !PasswordHasher.verify(body.password, user.getPasswordHash())) {
             JsonResponses.error(resp, 401, "invalid credentials");
             return;
@@ -37,7 +46,7 @@ public class AuthLoginServlet extends HttpServlet {
         HttpSession s = req.getSession(true);
         s.setAttribute(SessionKeys.USER_ID, user.getId());
         s.setAttribute(SessionKeys.ROLE, user.getRole().name());
-        JsonResponses.writeJson(resp, 200, Map.of("user", user.toPublicView()));
+        JsonResponses.writeJson(resp, 200, Map.of("user", UserJson.toMap(user)));
     }
 
     private static final class LoginBody {

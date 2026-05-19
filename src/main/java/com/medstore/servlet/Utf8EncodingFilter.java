@@ -16,7 +16,11 @@ public class Utf8EncodingFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
             throws IOException, ServletException {
-        req.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        String ct = req.getContentType();
+        boolean multipart = ct != null && ct.toLowerCase().startsWith("multipart/");
+        if (!multipart) {
+            req.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        }
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
         chain.doFilter(req, resp);
     }

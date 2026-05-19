@@ -8,12 +8,14 @@ public abstract class User {
     private final String email;
     private final String passwordHash;
     private String fullName;
+    private String profileImagePath;
 
-    protected User(Integer id, String email, String passwordHash, String fullName) {
+    protected User(Integer id, String email, String passwordHash, String fullName, String profileImagePath) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
+        this.profileImagePath = profileImagePath;
     }
 
     /** Role for persistence and RBAC checks. */
@@ -27,6 +29,11 @@ public abstract class User {
 
     /** Whether this user may remove other accounts. */
     public abstract boolean canDeleteUsers();
+
+    /** Whether this user may edit or delete receipts. */
+    public boolean canManageReceipts() {
+        return false;
+    }
 
     public Integer getId() {
         return id;
@@ -48,17 +55,27 @@ public abstract class User {
         this.fullName = fullName;
     }
 
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
     /** Safe view for JSON / UI (no password hash). */
     public UserPublicView toPublicView() {
-        return new UserPublicView(getId(), getEmail(), getFullName(), getRole().name());
+        return new UserPublicView(getId(), getEmail(), getFullName(), getRole().name(), getProfileImagePath());
     }
 
     /** Factory: build the correct subtype from persisted role string. */
-    public static User hydrate(Integer id, String email, String passwordHash, String fullName, UserRole role) {
+    public static User hydrate(Integer id, String email, String passwordHash, String fullName,
+                               UserRole role, String profileImagePath) {
         return switch (role) {
-            case CUSTOMER -> new Customer(id, email, passwordHash, fullName);
-            case PHARMACIST -> new Pharmacist(id, email, passwordHash, fullName);
-            case ADMIN -> new Admin(id, email, passwordHash, fullName);
+            case CUSTOMER -> new Customer(id, email, passwordHash, fullName, profileImagePath);
+            case PHARMACIST -> new Pharmacist(id, email, passwordHash, fullName, profileImagePath);
+            case ADMIN -> new Admin(id, email, passwordHash, fullName, profileImagePath);
+            case ACCOUNTANT -> new Accountant(id, email, passwordHash, fullName, profileImagePath);
         };
     }
 }

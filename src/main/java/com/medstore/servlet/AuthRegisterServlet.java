@@ -63,10 +63,17 @@ public class AuthRegisterServlet extends HttpServlet {
                     "fullName", body.fullName.strip(),
                     "role", role.name()));
         } catch (RuntimeException db) {
-            if (db.getCause() instanceof java.sql.SQLException se
-                    && se.getErrorCode() == 1062) {
-                JsonResponses.error(resp, 409, "email already registered");
-                return;
+            if (db.getCause() instanceof java.sql.SQLException se) {
+                if (se.getErrorCode() == 1062) {
+                    JsonResponses.error(resp, 409, "email already registered");
+                    return;
+                }
+                if (se.getErrorCode() == 1265) {
+                    JsonResponses.error(resp, 503,
+                            "Database schema outdated — restart the app server to apply updates, "
+                                    + "or run sql/migration_v2.sql");
+                    return;
+                }
             }
             throw db;
         }

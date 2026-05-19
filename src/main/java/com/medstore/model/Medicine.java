@@ -7,16 +7,18 @@ public final class Medicine {
     private final int id;
     private final String name;
     private final String description;
+    private final String imagePath;
     private final BigDecimal price;
     private int stock;
     private final Integer createdByUserId;
     private final Timestamp createdAt;
 
-    public Medicine(int id, String name, String description, BigDecimal price, int stock,
+    public Medicine(int id, String name, String description, String imagePath, BigDecimal price, int stock,
                     Integer createdByUserId, Timestamp createdAt) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.imagePath = imagePath;
         this.price = price;
         this.stock = stock;
         this.createdByUserId = createdByUserId;
@@ -33,6 +35,10 @@ public final class Medicine {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getImagePath() {
+        return imagePath;
     }
 
     public BigDecimal getPrice() {
