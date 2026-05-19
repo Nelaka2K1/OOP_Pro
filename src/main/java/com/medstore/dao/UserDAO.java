@@ -16,12 +16,19 @@ import java.util.Optional;
 public final class UserDAO {
 
     private static User mapUser(ResultSet rs) throws SQLException {
+        String profileImage = null;
+        try {
+            profileImage = rs.getString("profile_image_path");
+        } catch (SQLException ignored) {
+            // column missing until migration runs
+        }
         return User.hydrate(
                 rs.getInt("id"),
                 rs.getString("email"),
                 rs.getString("password_hash"),
                 rs.getString("full_name"),
-                UserRole.valueOf(rs.getString("role")));
+                UserRole.valueOf(rs.getString("role")),
+                profileImage);
     }
 
     public int countUsers() {
@@ -89,6 +96,32 @@ public final class UserDAO {
             ps.setString(1, email);
             ps.setString(2, fullName);
             ps.setInt(3, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateByAdmin(int id, String email, String fullName, UserRole role) {
+        String sql = "UPDATE users SET email = ?, full_name = ?, role = ? WHERE id = ?";
+        try (Connection c = Db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, fullName);
+            ps.setString(3, role.name());
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateProfileImage(int id, String imagePath) {
+        String sql = "UPDATE users SET profile_image_path = ? WHERE id = ?";
+        try (Connection c = Db.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, imagePath);
+            ps.setInt(2, id);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);

@@ -3,6 +3,7 @@ package com.medstore.servlet;
 import com.medstore.dao.UserDAO;
 import com.medstore.model.UserRole;
 import com.medstore.util.PasswordHasher;
+import com.medstore.util.SchemaMigrator;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -21,6 +22,7 @@ public class AppBootstrapListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
+            SchemaMigrator.migrate();
             UserDAO dao = new UserDAO();
             if (dao.countUsers() == 0) {
                 dao.insertRegistered(SEED_EMAIL, PasswordHasher.hash(SEED_PASSWORD), SEED_NAME, UserRole.ADMIN);

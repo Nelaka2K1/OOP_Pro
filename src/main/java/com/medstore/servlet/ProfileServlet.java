@@ -3,6 +3,7 @@ package com.medstore.servlet;
 import com.medstore.dao.UserDAO;
 import com.medstore.model.User;
 import com.medstore.servlet.util.Auth;
+import com.medstore.servlet.util.UserJson;
 import com.medstore.util.JsonResponses;
 
 import jakarta.servlet.ServletException;
@@ -47,7 +48,7 @@ public class ProfileServlet extends HttpServlet {
         }
         users.updateProfile(uid, body.email.strip(), body.fullName.strip());
         User updated = users.findById(uid).orElseThrow();
-        JsonResponses.writeJson(resp, 200, Map.of("ok", true, "user", updated.toPublicView()));
+        JsonResponses.writeJson(resp, 200, Map.of("ok", true, "user", UserJson.toMap(updated)));
     }
 
     @Override
