@@ -2,8 +2,8 @@ package com.medstore.model;
 
 public final class Admin extends User {
 
-    public Admin(Integer id, String email, String passwordHash, String fullName) {
-        super(id, email, passwordHash, fullName);
+    public Admin(Integer id, String email, String passwordHash, String fullName, String profileImagePath) {
+        super(id, email, passwordHash, fullName, profileImagePath);
     }
 
     @Override
@@ -13,12 +13,12 @@ public final class Admin extends User {
 
     @Override
     public boolean canManageCatalog() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean canDeleteMedicines() {
-        return true;
+        return false;
     }
 
     @Override

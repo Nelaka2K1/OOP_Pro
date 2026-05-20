@@ -1,5 +1,6 @@
 package com.medstore.service;
 
+import com.medstore.dao.ReceiptDAO;
 import com.medstore.model.CartLine;
 import com.medstore.util.Db;
 
@@ -13,15 +14,17 @@ import java.util.List;
 
 public final class JdbcPurchaseProcessor implements PurchaseProcessor {
 
+    private final ReceiptDAO receipts = new ReceiptDAO();
+
     @Override
-    public CheckoutResult checkout(int customerUserId) {
+    public CheckoutResult checkout(int customerUserId, String customerName, String customerEmail, String paymentMethod) {
         try (Connection conn = Db.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 List<CartLine> lines = loadCart(conn, customerUserId);
                 if (lines.isEmpty()) {
                     conn.rollback();
-                    return new CheckoutResult(false, "Cart is empty", null, null);
+                    return new CheckoutResult(false, "Cart is empty", null, null, null);
                 }
 
                 BigDecimal total = BigDecimal.ZERO;
@@ -30,7 +33,7 @@ public final class JdbcPurchaseProcessor implements PurchaseProcessor {
                     if (avail < line.getQuantity()) {
                         conn.rollback();
                         return new CheckoutResult(false,
-                                "Insufficient stock for: " + line.getMedicineName(), null, null);
+                                "Insufficient stock for: " + line.getMedicineName(), null, null, null);
                     }
                     total = total.add(line.lineTotal());
                 }
@@ -42,8 +45,12 @@ public final class JdbcPurchaseProcessor implements PurchaseProcessor {
                 }
                 clearCart(conn, customerUserId);
 
+                String method = paymentMethod != null && !paymentMethod.isBlank() ? paymentMethod.strip() : "Card";
+                int receiptId = receipts.insert(conn, orderId, customerUserId,
+                        customerName, customerEmail, total, method);
+
                 conn.commit();
-                return new CheckoutResult(true, "Order placed", orderId, total);
+                return new CheckoutResult(true, "Payment successful", orderId, receiptId, total);
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
